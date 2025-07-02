@@ -17,7 +17,7 @@ export default function Button({
     <button
       type={type}
       onClick={onClick}
-      className="bg-blue-600 hover:bg-blue-700 text-white rounded px-4 py-2 font-semibold transition duration-200"
+      className="bg-blue-600 hover:bg-blue-700 text-white rounded px-6 py-3 text-lg font-semibold transition duration-200 w-full"
     >
       {text}
     </button>
