@@ -1,6 +1,7 @@
 // core/db/mongoDriver.ts
 
 import net from 'net'
+import { encodeDocument } from "./bson";
 
 
 // 1. Build MongoDB client class
@@ -77,6 +78,46 @@ export class MongoDriver {
     this.socket.write(pingCommand);
     console.log("📡 Sent ping command");
   }
+
+  // InsertOne function
+async insertOne(collection: string, document: any) {
+  // [1] Build insert command BSON
+  const insertCmd = {
+    insert: collection,
+    documents: [document],
+    ordered: true,
+    $db: "test",
+  };
+
+  const cmdBuf = encodeDocument(insertCmd as any);
+
+  // [2] Build OP_MSG packet
+  const headerSize = 16 + 4 + 1; // header + flags + payload type
+  const totalSize = headerSize + cmdBuf.length;
+
+  const packet = Buffer.alloc(totalSize);
+
+  let offset = 0;
+  packet.writeInt32LE(totalSize, offset);
+  offset += 4;
+  packet.writeInt32LE(1, offset);
+  offset += 4;
+  packet.writeInt32LE(0, offset);
+  offset += 4;
+  packet.writeInt32LE(2013, offset);
+  offset += 4; // OP_MSG
+
+  packet.writeInt32LE(0, offset);
+  offset += 4; // flagBits
+  packet.writeUInt8(0, offset);
+  offset += 1; // payload type
+
+  cmdBuf.copy(packet, offset);
+
+  // [3] Send to MongoDB
+  this.socket.write(packet);
+  console.log("📡 Sent InsertOne command");
+}
 
   // 4. Close connection
   close() {
